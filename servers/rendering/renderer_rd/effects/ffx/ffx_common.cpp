@@ -293,7 +293,7 @@ static FfxErrorCode register_resource_rd(FfxInterface *p_backend_interface, cons
 
 static FfxErrorCode unregister_resources_rd(FfxInterface *p_backend_interface, FfxCommandList p_command_list, FfxUInt32 effect_context_id) {
 	FFXCommon::Scratch &scratch = *reinterpret_cast<FFXCommon::Scratch *>(p_backend_interface->scratchBuffer);
-	LocalVector<uint32_t> dynamic_list_copy = scratch.resources.dynamic_list;
+	LocalVector<uint32_t> dynamic_list_copy(scratch.resources.dynamic_list);
 	for (uint32_t i : dynamic_list_copy) {
 		scratch.resources.remove(i);
 	}
@@ -520,6 +520,13 @@ static FfxErrorCode execute_gpu_jobs_rd(FfxInterface *p_backend_interface, FfxCo
 	ERR_FAIL_NULL_V(p_backend_interface, FFX_ERROR_INVALID_ARGUMENT);
 
 	FFXCommon::Scratch &scratch = *reinterpret_cast<FFXCommon::Scratch *>(p_backend_interface->scratchBuffer);
+
+	// Each dispatch (a frame) starts at its own slice of the ring, so a job gets the same constant buffer every few frames and the
+	// uniform sets cached with it are reused. Walking on round the whole ring made a new set for nearly every job, until D3D12's
+	// fixed descriptor heap ran out.
+	const uint32_t ring_slice = FFX_UBO_RING_BUFFER_SIZE / FFX_MAX_QUEUED_FRAMES;
+	scratch.ubo_ring_buffer_index = (scratch.ubo_frame++ % FFX_MAX_QUEUED_FRAMES) * ring_slice;
+
 	FfxErrorCode error_code = FFX_OK;
 	for (const FfxGpuJobDescription &job : scratch.gpu_jobs) {
 		switch (job.jobType) {

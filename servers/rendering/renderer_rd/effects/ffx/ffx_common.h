@@ -140,6 +140,7 @@ public:
 		// Uniform ring buffer
 		RID ubo_ring_buffer[FFX_UBO_RING_BUFFER_SIZE];
 		uint32_t ubo_ring_buffer_index = 0;
+		uint32_t ubo_frame = 0;
 		// Staging buffer for constant buffer data.
 		uint8_t *staging_constant_buffer;
 		size_t staging_constant_buffer_base = 0;
