@@ -220,7 +220,7 @@ void RendererViewport::_configure_3d_render_buffers(Viewport *p_viewport) {
 			if (use_taa && scaling_type == RSE::VIEWPORT_SCALING_3D_TYPE_TEMPORAL) {
 				// Temporal upscalers can't be used with TAA.
 				// Turn it off and prefer using the temporal upscaler.
-				WARN_PRINT_ONCE("FSR 2 or MetalFX Temporal is not compatible with TAA. Disabling TAA internally.");
+				WARN_PRINT_ONCE("FSR 2/3 or MetalFX Temporal is not compatible with TAA. Disabling TAA internally.");
 				use_taa = false;
 			}
 
@@ -243,6 +243,7 @@ void RendererViewport::_configure_3d_render_buffers(Viewport *p_viewport) {
 				case RSE::VIEWPORT_SCALING_3D_MODE_METALFX_TEMPORAL:
 				case RSE::VIEWPORT_SCALING_3D_MODE_FSR:
 				case RSE::VIEWPORT_SCALING_3D_MODE_FSR2:
+				case RSE::VIEWPORT_SCALING_3D_MODE_FSR3:
 					target_width = p_viewport->size.width;
 					target_height = p_viewport->size.height;
 					render_width = MAX(target_width * scaling_3d_scale, 1.0); // target_width / (target_width * scaling)
@@ -292,6 +293,7 @@ void RendererViewport::_configure_3d_render_buffers(Viewport *p_viewport) {
 			rb_config.set_msaa_3d(msaa_3d);
 			rb_config.set_screen_space_aa(p_viewport->screen_space_aa);
 			rb_config.set_fsr_sharpness(p_viewport->fsr_sharpness);
+			rb_config.set_fsr_auto_generate_reactive(p_viewport->fsr_auto_generate_reactive);
 			rb_config.set_texture_mipmap_bias(texture_mipmap_bias);
 			rb_config.set_anisotropic_filtering_level(p_viewport->anisotropic_filtering_level);
 			rb_config.set_use_taa(use_taa);
@@ -1032,6 +1034,10 @@ void RendererViewport::viewport_set_scaling_3d_mode(RID p_viewport, RSE::Viewpor
 			WARN_PRINT_ONCE_ED("FSR2 3D scaling is only available when using the Forward+ renderer.");
 			return;
 		}
+		if (p_mode == RSE::VIEWPORT_SCALING_3D_MODE_FSR3) {
+			WARN_PRINT_ONCE_ED("FSR3 3D scaling is only available when using the Forward+ renderer.");
+			return;
+		}
 		if (p_mode == RSE::VIEWPORT_SCALING_3D_MODE_METALFX_TEMPORAL) {
 			WARN_PRINT_ONCE_ED("MetalFX Temporal 3D scaling is only available when using the Forward+ renderer.");
 			return;
@@ -1062,6 +1068,14 @@ void RendererViewport::viewport_set_fsr_sharpness(RID p_viewport, float p_sharpn
 	ERR_FAIL_NULL(viewport);
 
 	viewport->fsr_sharpness = p_sharpness;
+	_configure_3d_render_buffers(viewport);
+}
+
+void RendererViewport::viewport_set_fsr_auto_generate_reactive(RID p_viewport, bool p_fsr_auto_generate_reactive) {
+	Viewport *viewport = viewport_owner.get_or_null(p_viewport);
+	ERR_FAIL_NULL(viewport);
+
+	viewport->fsr_auto_generate_reactive = p_fsr_auto_generate_reactive;
 	_configure_3d_render_buffers(viewport);
 }
 

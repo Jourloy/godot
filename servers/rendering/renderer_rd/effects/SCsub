@@ -15,9 +15,11 @@ if env["metal"]:
 
 thirdparty_obj = []
 
-thirdparty_dir = "#thirdparty/amd-fsr2/"
-thirdparty_sources = ["ffx_assert.cpp", "ffx_fsr2.cpp"]
-thirdparty_sources = [thirdparty_dir + file for file in thirdparty_sources]
+thirdparty_dir = "#thirdparty/amd-ffx/"
+thirdparty_sources = thirdparty_dir + "*.cpp"
+
+if env.dev_build:
+    env_effects.Append(CPPDEFINES=["FFX_DEBUG"])
 
 env_effects.Prepend(CPPPATH=[thirdparty_dir])
 
@@ -73,6 +75,7 @@ env.servers_sources += thirdparty_obj
 module_obj = []
 
 env_effects.add_source_files(module_obj, "*.cpp")
+env_effects.add_source_files(module_obj, "ffx/*.cpp")
 env.servers_sources += module_obj
 
 # Needed to force rebuilding the module files when the thirdparty library is updated.

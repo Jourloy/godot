@@ -39,6 +39,7 @@
 #include "core/os/os.h"
 #include "core/profiling/profiling.h"
 #include "core/templates/fixed_vector.h"
+#include "servers/rendering/renderer_rd/effects/ffx/ffx_common.h"
 #include "servers/rendering/rendering_device_binds.h"
 #include "servers/rendering/rendering_shader_container.h"
 #include "servers/rendering/shader_include_db.h"

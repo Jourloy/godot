@@ -49,6 +49,7 @@ private:
 	RSE::ViewportAnisotropicFiltering anisotropic_filtering_level = RSE::VIEWPORT_ANISOTROPY_4X;
 
 	float fsr_sharpness = 0.0;
+	bool fsr_auto_generate_reactive = false;
 	float texture_mipmap_bias = 0.0;
 	bool use_taa = false;
 	bool use_debanding = false;
@@ -81,6 +82,9 @@ public:
 	float get_fsr_sharpness() const { return fsr_sharpness; }
 	void set_fsr_sharpness(float p_fsr_sharpness) { fsr_sharpness = p_fsr_sharpness; }
 
+	bool get_fsr_auto_generate_reactive() const { return fsr_auto_generate_reactive; }
+	void set_fsr_auto_generate_reactive(bool p_fsr_auto_generate_reactive) { fsr_auto_generate_reactive = p_fsr_auto_generate_reactive; }
+
 	float get_texture_mipmap_bias() const { return texture_mipmap_bias; }
 	void set_texture_mipmap_bias(float p_texture_mipmap_bias) { texture_mipmap_bias = p_texture_mipmap_bias; }
 
@@ -111,6 +115,7 @@ public:
 
 	// for those settings that are unlikely to require buffers to be recreated, we'll add setters
 	virtual void set_fsr_sharpness(float p_fsr_sharpness) = 0;
+	virtual void set_fsr_auto_generate_reactive(bool p_fsr_auto_generate_reactive) = 0;
 	virtual void set_texture_mipmap_bias(float p_texture_mipmap_bias) = 0;
 	virtual void set_anisotropic_filtering_level(RSE::ViewportAnisotropicFiltering p_anisotropic_filtering_level) = 0;
 	virtual void set_use_debanding(bool p_use_debanding) = 0;

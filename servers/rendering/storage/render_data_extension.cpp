@@ -38,6 +38,7 @@
 void RenderSceneBuffersExtension::_bind_methods() {
 	GDVIRTUAL_BIND(_configure, "config");
 	GDVIRTUAL_BIND(_set_fsr_sharpness, "fsr_sharpness");
+	GDVIRTUAL_BIND(_set_fsr_auto_generate_reactive, "fsr_auto_generate_reactive");
 	GDVIRTUAL_BIND(_set_texture_mipmap_bias, "texture_mipmap_bias");
 	GDVIRTUAL_BIND(_set_anisotropic_filtering_level, "anisotropic_filtering_level");
 	GDVIRTUAL_BIND(_set_use_debanding, "use_debanding");
@@ -49,6 +50,10 @@ void RenderSceneBuffersExtension::configure(const RenderSceneBuffersConfiguratio
 
 void RenderSceneBuffersExtension::set_fsr_sharpness(float p_fsr_sharpness) {
 	GDVIRTUAL_CALL(_set_fsr_sharpness, p_fsr_sharpness);
+}
+
+void RenderSceneBuffersExtension::set_fsr_auto_generate_reactive(bool p_fsr_auto_generate_reactive) {
+	GDVIRTUAL_CALL(_set_fsr_auto_generate_reactive, p_fsr_auto_generate_reactive);
 }
 
 void RenderSceneBuffersExtension::set_texture_mipmap_bias(float p_texture_mipmap_bias) {

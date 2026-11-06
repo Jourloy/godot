@@ -43,6 +43,7 @@ protected:
 
 	GDVIRTUAL1(_configure, const RenderSceneBuffersConfiguration *)
 	GDVIRTUAL1(_set_fsr_sharpness, float)
+	GDVIRTUAL1(_set_fsr_auto_generate_reactive, bool)
 	GDVIRTUAL1(_set_texture_mipmap_bias, float)
 	GDVIRTUAL1(_set_anisotropic_filtering_level, int)
 	GDVIRTUAL1(_set_use_debanding, bool)
@@ -53,6 +54,7 @@ public:
 	virtual void configure(const RenderSceneBuffersConfiguration *p_config) override;
 
 	virtual void set_fsr_sharpness(float p_fsr_sharpness) override;
+	virtual void set_fsr_auto_generate_reactive(bool p_fsr_auto_generate_reactive) override;
 	virtual void set_texture_mipmap_bias(float p_texture_mipmap_bias) override;
 	virtual void set_anisotropic_filtering_level(RSE::ViewportAnisotropicFiltering p_anisotropic_filtering_level) override;
 	virtual void set_use_debanding(bool p_use_debanding) override;
