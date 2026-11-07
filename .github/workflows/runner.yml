@@ -1,5 +1,5 @@
 name: 🔗 GHA
-on: [push, pull_request, merge_group, workflow_dispatch]
+on: [workflow_dispatch] # RUGS!: not on every push to our fork; the templates are rugs_templates.yml
 
 concurrency:
   group: ${{ github.workflow }}|${{ github.ref_name }}

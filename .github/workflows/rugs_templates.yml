@@ -1,0 +1,157 @@
+name: 🧹 RUGS! export templates
+# .NET export templates of this branch (4.7.2-stable + FSR 3.1) for the platforms RUGS! ships on, laid out like the official
+# 4.7.2.stable.mono ones: one artifact, `rugs-templates`, to drop into the export templates folder.
+on:
+  workflow_dispatch:
+  push:
+    branches: [rugs-*]
+
+env:
+  SCONS_FLAGS: >-
+    production=yes
+    lto=none
+    module_mono_enabled=yes
+    module_text_server_fb_enabled=yes
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    name: Windows ${{ matrix.target }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [template_debug, template_release]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/godot-deps
+      - name: Build dependencies
+        shell: sh
+        run: |
+          python ./misc/scripts/install_d3d12_sdk_windows.py
+          python ./misc/scripts/install_angle.py
+          python ./misc/scripts/install_accesskit.py
+      - uses: ./.github/actions/godot-build
+        with:
+          platform: windows
+          target: ${{ matrix.target }}
+          scons-flags: ${{ env.SCONS_FLAGS }} arch=x86_64 d3d12=yes angle=yes accesskit=yes
+      - name: Name like the official templates
+        shell: bash
+        run: |
+          kind=${{ matrix.target }}; kind=${kind#template_}
+          mkdir out
+          mv bin/godot.windows.${{ matrix.target }}.x86_64.mono.exe out/windows_${kind}_x86_64.exe
+          mv bin/godot.windows.${{ matrix.target }}.x86_64.mono.console.exe out/windows_${kind}_x86_64_console.exe
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.target }}
+          path: out/*
+
+  linux:
+    # One LTS before the latest, as Godot's own CI does, for an older glibc.
+    runs-on: ubuntu-22.04
+    name: Linux ${{ matrix.target }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [template_debug, template_release]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libwayland-bin
+      - uses: ./.github/actions/godot-deps
+      - name: Build dependencies
+        run: python ./misc/scripts/install_accesskit.py
+      - uses: ./.github/actions/godot-build
+        with:
+          platform: linuxbsd
+          target: ${{ matrix.target }}
+          scons-flags: ${{ env.SCONS_FLAGS }} arch=x86_64 accesskit=yes
+      - name: Name like the official templates
+        run: |
+          kind=${{ matrix.target }}; kind=${kind#template_}
+          mkdir out
+          mv bin/godot.linuxbsd.${{ matrix.target }}.x86_64.mono out/linux_${kind}.x86_64
+          strip out/linux_${kind}.x86_64
+          chmod +x out/linux_${kind}.x86_64
+          ls -l out
+          objdump -T out/linux_${kind}.x86_64 | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.target }}
+          path: out/*
+
+  macos:
+    runs-on: macos-26
+    name: macOS ${{ matrix.target }}
+    timeout-minutes: 240
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [template_debug, template_release]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/godot-deps
+      - name: Build dependencies
+        run: |
+          python ./misc/scripts/install_angle.py
+          python3 ./misc/scripts/install_accesskit.py
+          sh misc/scripts/install_vulkan_sdk_macos.sh
+      - uses: ./.github/actions/godot-build
+        with:
+          platform: macos
+          target: ${{ matrix.target }}
+          scons-flags: ${{ env.SCONS_FLAGS }} arch=x86_64 vulkan=yes angle=yes accesskit=yes
+      - uses: ./.github/actions/godot-build
+        with:
+          platform: macos
+          target: ${{ matrix.target }}
+          scons-flags: ${{ env.SCONS_FLAGS }} arch=arm64 vulkan=yes angle=yes accesskit=yes
+      - name: Universal binary
+        run: |
+          kind=${{ matrix.target }}; kind=${kind#template_}
+          mkdir out
+          lipo -create bin/godot.macos.${{ matrix.target }}.x86_64.mono bin/godot.macos.${{ matrix.target }}.arm64.mono -output out/godot_macos_${kind}.universal
+          strip out/godot_macos_${kind}.universal
+          # Stripping undoes the linker's own signature: Apple Silicon runs nothing unsigned, so sign it again, ad hoc.
+          codesign --force --sign - out/godot_macos_${kind}.universal
+          chmod +x out/godot_macos_${kind}.universal
+          lipo -info out/godot_macos_${kind}.universal
+          ls -l out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.target }}
+          path: out/*
+
+  package:
+    needs: [windows, linux, macos]
+    runs-on: ubuntu-latest
+    name: Package
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: misc/dist/macos_template.app
+      - uses: actions/download-artifact@v4
+        with:
+          path: parts
+      - name: Lay out the templates
+        run: |
+          mkdir templates
+          cp parts/windows-*/* parts/linux-*/* templates/
+          cp -r misc/dist/macos_template.app .
+          mkdir -p macos_template.app/Contents/MacOS
+          cp parts/macos-*/* macos_template.app/Contents/MacOS/
+          chmod +x macos_template.app/Contents/MacOS/* templates/linux_*
+          zip -q -r -X templates/macos.zip macos_template.app
+          echo "4.7.2.stable.mono" > templates/version.txt
+          ls -l templates
+          unzip -l templates/macos.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rugs-templates
+          path: templates/*
